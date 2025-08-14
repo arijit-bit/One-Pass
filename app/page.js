@@ -17,6 +17,8 @@ export default function Home() {
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
   const [showMobileEntry, setShowMobileEntry] = useState(false)
   const [showMobileDashboard, setShowMobileDashboard] = useState(false)
+  const [alert, setalert] = useState(false);
+  const [alertTimer, setAlertTimer] = useState(5);
 
   const textRefURL = useRef();
   const textRefEmail = useRef();
@@ -34,6 +36,7 @@ export default function Home() {
   const handleMobileDashboard = () => {
     setShowMobileDashboard(!showMobileDashboard);
   }
+  
 
   // Local Storage Functions
   const saveToLocalStorage = (data) => {
@@ -61,7 +64,26 @@ export default function Home() {
     }
     return [];
   };
+  const makeallert = ()=>{
+    setalert(true);
+    setAlertTimer(5); // Reset timer to 5 seconds
+  }
 
+  const deletealldone = ()=>{
+    clearLocalStorage();
+    setalert(false);
+    setAlertTimer(5); // Reset timer
+  }
+
+  const deleteallcancel = ()=>{
+    setalert(false);
+    setAlertTimer(5); // Reset timer
+  }
+
+  const allertclose = ()=>{
+    setalert(false);
+    setAlertTimer(5); // Reset timer
+  }
   const clearLocalStorage = () => {
     try {
       localStorage.removeItem('passwordManagerEntries');
@@ -77,6 +99,21 @@ export default function Home() {
   useEffect(() => {
     loadFromLocalStorage();
   }, []);
+
+  // Alert timer countdown effect
+  useEffect(() => {
+    let timer;
+    if (alert && alertTimer > 0) {
+      timer = setTimeout(() => {
+        setAlertTimer(alertTimer - 1);
+      }, 1000);
+    } else if (alert && alertTimer === 0) {
+      // Auto-cancel after 5 seconds
+      setalert(false);
+      setAlertTimer(5);
+    }
+    return () => clearTimeout(timer);
+  }, [alert, alertTimer]);
 
   const handelCopy = (ref, fieldType) => {
     const text = ref.current.innerText;
@@ -266,6 +303,7 @@ export default function Home() {
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-gradient-to-bl to-green-500 via-blue-400 from-green-700 text-white overflow-hidden">
       {/* Notification Popup */}
+
       {notification.show && (
         <div className={`fixed top-5 right-5 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${notification.type === 'success' ? 'bg-green-500 text-white' :
           notification.type === 'warning' ? 'bg-yellow-500 text-white' :
@@ -286,6 +324,87 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Clear All Data Alert Modal */}
+      {alert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop with blur effect matching theme */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-br from-blue-400/40 via-green-400/40 to-blue-500/40 backdrop-blur-xl" 
+            onClick={deleteallcancel}
+          ></div>
+          
+          {/* Modal Content */}
+          <div className="relative bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-6 w-full max-w-md mx-auto border border-white/30 transform ">
+            {/* Icon and Title */}
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-full p-3 shadow-lg">
+                <svg 
+                  className="w-8 h-8 text-white" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-2 font-poppins">
+                Clear All Data
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                This will permanently delete all your saved password entries. 
+                <span className="text-red-600 font-medium">This action cannot be undone.</span>
+              </p>
+            </div>
+
+            {/* Countdown Timer */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-6 border border-blue-200">
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium text-blue-700">
+                  Auto-canceling in {alertTimer} second{alertTimer !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={deleteallcancel}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+                Cancel
+              </button>
+              <button
+                onClick={deletealldone}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Yes, Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {show && (
         <div className="absolute h-[90vh] max-[1080px]:w-[97vw] max-[1080px]:pt-15 z-10 w-[90vw] bg-white/20 backdrop-blur-2xl rounded-xl shadow-2xl flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-6 text-black">
@@ -674,7 +793,7 @@ export default function Home() {
                 </svg>
                 Reload Data
               </button>
-              <button onClick={clearLocalStorage} className="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2">
+              <button onClick={makeallert} className="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 20 20"
@@ -811,7 +930,7 @@ export default function Home() {
                   </svg>
                   Reload Data
                 </button>
-                <button onClick={clearLocalStorage} className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2">
+                <button onClick={makeallert} className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2">
                   <svg
                     className="w-4 h-4"
                     viewBox="0 0 20 20"
